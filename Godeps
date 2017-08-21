@@ -69,6 +69,8 @@ github.com/StackExchange/wmi f3e2bae1e0cb5aef83e319133eabfee30013a4a5
 github.com/streadway/amqp 63795daa9a446c920826655f26ba31c81c860fd6
 github.com/stretchr/objx 1a9d0bb9f541897e62256577b352fdbc1fb4fd94
 github.com/stretchr/testify 4d4bfba8f1d1027c4fdbe371823030df51419987
+github.com/vishvananda/netlink da7420cab5e209195f5f7387fccd4c7f48758d30
+github.com/vishvananda/netns 8ba1072b58e0c2a240eb5f6120165c7776c3e7b8
 github.com/vjeantet/grok d73e972b60935c7fec0b4ffbc904ed39ecaf7efe
 github.com/wvanbergen/kafka bc265fedb9ff5b5c5d3c0fdcef4a819b3523d3ee
 github.com/wvanbergen/kazoo-go 968957352185472eacb69215fa3dbfcfdbac1096

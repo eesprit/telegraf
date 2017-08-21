@@ -18,6 +18,8 @@ import (
 	"github.com/influxdata/telegraf/filter"
 	"github.com/influxdata/telegraf/internal"
 	"github.com/influxdata/telegraf/plugins/inputs"
+	"github.com/vishvananda/netlink"
+	"github.com/vishvananda/netns"
 )
 
 type DockerLabelFilter struct {
@@ -462,16 +464,17 @@ func gatherContainerStats(
 	}
 
 	totalNetworkStatMap := make(map[string]interface{})
-	for network, netstats := range stat.Networks {
+
+	for network, netstats := range getLinkStats(id) {
 		netfields := map[string]interface{}{
-			"rx_dropped":   netstats.RxDropped,
-			"rx_bytes":     netstats.RxBytes,
-			"rx_errors":    netstats.RxErrors,
-			"tx_packets":   netstats.TxPackets,
-			"tx_dropped":   netstats.TxDropped,
-			"rx_packets":   netstats.RxPackets,
-			"tx_errors":    netstats.TxErrors,
-			"tx_bytes":     netstats.TxBytes,
+			"rx_dropped":   uint64(netstats.RxDropped),
+			"rx_bytes":     uint64(netstats.RxBytes),
+			"rx_errors":    uint64(netstats.RxErrors),
+			"tx_packets":   uint64(netstats.TxPackets),
+			"tx_dropped":   uint64(netstats.TxDropped),
+			"rx_packets":   uint64(netstats.RxPackets),
+			"tx_errors":    uint64(netstats.TxErrors),
+			"tx_bytes":     uint64(netstats.TxBytes),
 			"container_id": id,
 		}
 		// Create a new network tag dictionary for the "network" tag
@@ -515,6 +518,31 @@ func gatherContainerStats(
 	}
 
 	gatherBlockIOMetrics(stat, acc, tags, now, id, perDevice, total)
+}
+
+func getLinkStats(id string) map[string]*netlink.LinkStatistics {
+	ret := map[string]*netlink.LinkStatistics{}
+	nsHandler, err := netns.GetFromDocker(id)
+	if err != nil {
+		return nil
+	}
+	defer nsHandler.Close()
+	handler, err := netlink.NewHandleAt(nsHandler)
+	if err != nil {
+		return nil
+	}
+	defer handler.Delete()
+	links, err := handler.LinkList()
+	if err != nil {
+		return nil
+	}
+	for _, link := range links {
+		attr := link.Attrs()
+		if attr.Name != "lo" {
+			ret[attr.Name] = attr.Statistics
+		}
+	}
+	return ret
 }
 
 func gatherBlockIOMetrics(
